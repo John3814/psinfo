@@ -27,6 +27,7 @@ FILE *file;
 struct proceso obtenerInfo(FILE *fptr);
 void registrarDatoEnProceso(struct proceso *myProceso, int caso, char dato[]);
 void imprimirInfo(struct proceso myProceso);
+void agregarInfoEnReporte(FILE *fptr, struct proceso myProceso);
 
 int main(int argc, char *argv[])
 {
@@ -59,7 +60,33 @@ int main(int argc, char *argv[])
             }
         } 
         else if (strcmp(argv[1], "-r") == 0) {
-            printf("La opcion %s no esta implementada!!", argv[1]);
+            FILE *reporte;
+
+            char nombreReporte[100] = "psinfo-report";
+            for (int i = 2; i < argc; i++)
+            {   
+                strcat(nombreReporte, "-");
+                strcat(nombreReporte, argv[i]);
+            }
+            strcat(nombreReporte, ".info");
+            printf("Archivo de salida generado: %s\n", nombreReporte);
+            reporte = fopen(nombreReporte, "w");
+            fprintf(reporte, "Información recolectada!!!\n\n");
+
+            for (int i = 2; i < argc; i++)
+            {
+                char dir[50];
+                char pid[6];
+                sprintf(pid, "%s", argv[i]);
+                sprintf(dir, "/proc/%s/status", pid);
+                file = fopen(dir, "r");
+                struct proceso myProceso = obtenerInfo(file);
+                fclose(file);
+                agregarInfoEnReporte(reporte, myProceso);
+                
+            }
+            fclose(reporte);
+            printf("Archivo de salida generado: %s\n", nombreReporte);
 
         } else {
             printf("La opcion %s no esta definida!!", argv[1]);
@@ -95,7 +122,6 @@ struct proceso obtenerInfo(FILE *fptr)
   
         if (strcmp(key, names[i]) == 0)
         {
-                //printf("%s:%s\n", key, value);
                 registrarDatoEnProceso(&myProceso, i, value);
                 i++;
         }
@@ -152,6 +178,19 @@ void imprimirInfo(struct proceso myProceso)
     printf("\tno voluntarios:%s\n", myProceso.cambios.noVoluntarios);
 }
 
+void agregarInfoEnReporte(FILE *fptr, struct proceso myProceso)
+{
+    fprintf(fptr, "Pid:%s\n", myProceso.pid);
+    fprintf(fptr, "Nombre del proceso:%s\n", myProceso.nombre);
+    fprintf(fptr, "Tamaño total de la imagen de memoria:%s\n", myProceso.memoriaTotal);
+    fprintf(fptr, "Tamaño de la memoria TEXT:%s\n", myProceso.memoriaText);
+    fprintf(fptr, "Tamaño de la memoria DATA:%s\n", myProceso.memoriaData);
+    fprintf(fptr, "Tamaños de la memoria STACK%s\n", myProceso.memoriaStack);
+    fprintf(fptr, "Número de cambios de contexto:\n");
+    fprintf(fptr, "\tvoluntarios:%s\n", myProceso.cambios.voluntarios);
+    fprintf(fptr, "\tno voluntarios:%s\n", myProceso.cambios.noVoluntarios);
+    fprintf(fptr, "\n\n");
+}
 
 
 
