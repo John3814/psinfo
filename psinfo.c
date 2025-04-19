@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 {
     if (argc == 2) 
     {
-        char dir[256];
+        char dir[50];
         char pid[6];
         sprintf(pid, "%s", argv[1]);
         sprintf(dir, "/proc/%s/status", pid);
@@ -40,7 +40,33 @@ int main(int argc, char *argv[])
         struct proceso myProceso = obtenerInfo(file);
         imprimirInfo(myProceso);
         fclose(file);
+    } else if (argc > 2)
+    {
+        if(strcmp(argv[1], "-l")  == 0)
+        {   
+            printf("\nInformación recolectada!!!\n\n");
+            for (int i = 2; i < argc; i++)
+            {
+                char dir[50];
+                char pid[6];
+                sprintf(pid, "%s", argv[i]);
+                sprintf(dir, "/proc/%s/status", pid);
+                file = fopen(dir, "r");
+                struct proceso myProceso = obtenerInfo(file);
+                imprimirInfo(myProceso);
+                fclose(file);
+                printf("\n\n");
+            }
+        } 
+        else if (strcmp(argv[1], "-r") == 0) {
+            printf("La opcion %s no esta implementada!!", argv[1]);
+
+        } else {
+            printf("La opcion %s no esta definida!!", argv[1]);
+        }
+        
     }
+    
 }
 
 
