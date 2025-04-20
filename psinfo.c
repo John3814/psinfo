@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "gestion_de_archivos.c"
+
+#include <stdio.h>
 
 struct cambiosDeContexto
 {
@@ -20,22 +23,21 @@ struct proceso
     struct cambiosDeContexto cambios;
 } myProceso;
 
+
 char *names[] = {"Name", "State", "Pid", "VmSize", "VmData", "VmStk", "VmExe", "voluntary_ctxt_switches", "nonvoluntary_ctxt_switches"};
 int lengthName = sizeof(names) / sizeof(names[0]);
+FILE *file;
 
-FILE *file, *reporte;
-void abriArchivoStatus(char pid[]);
-void crearArchivoReporte(int arg, char *pids[], char nombreReporte[]);
 struct proceso obtenerInfo(FILE *fptr);
 void registrarDatoEnProceso(struct proceso *myProceso, int caso, char dato[]);
-void imprimirInfo(struct proceso myProceso);
 void agregarInfoEnReporte(FILE *fptr, struct proceso myProceso);
+void imprimirInfo(struct proceso myProceso);
 
 int main(int argc, char *argv[])
 {   
     if (argc == 2) 
     {
-        abriArchivoStatus(argv[1]);
+        file = abriArchivoStatus(argv[1]);
         myProceso = obtenerInfo(file);
         imprimirInfo(myProceso);
         fclose(file);
@@ -44,10 +46,10 @@ int main(int argc, char *argv[])
         
         if(strcmp(argv[1], "-l")  == 0)
         {   
-            printf("\nInformación recolectada!!!\n\n");
+            printf("Información recolectada!!!\n");
             for (int i = 2; i < argc; i++)
             {
-                abriArchivoStatus(argv[i]);
+                file = abriArchivoStatus(argv[i]);
                 myProceso = obtenerInfo(file);
                 imprimirInfo(myProceso);
                 fclose(file);
@@ -55,42 +57,21 @@ int main(int argc, char *argv[])
         } 
         else if (strcmp(argv[1], "-r") == 0) {
             char nombreReporte[100] = "psinfo-report";
-            crearArchivoReporte(argc, argv, nombreReporte);
+            FILE *reporte = crearArchivoReporte(argc, argv, nombreReporte);
+            fprintf(reporte, "Informacion recolectada!!!\n");
             for (int i = 2; i < argc; i++)
             {
-                abriArchivoStatus(argv[i]);
+                file = abriArchivoStatus(argv[i]);
                 myProceso = obtenerInfo(file);
                 agregarInfoEnReporte(reporte, myProceso);
                 fclose(file);
             }
             printf("Archivo de salida generado: %s\n", nombreReporte);
             fclose(reporte);
-            
         } else {
             printf("La opcion %s no esta definida!!!\n", argv[1]);
         }   
     }
-    
-}
-
-void abriArchivoStatus(char pid[])
-{
-    char myDir[50];
-    sprintf(myDir, "/proc/%s/status", pid);
-    file = fopen(myDir, "r");
-}
-
-
-void crearArchivoReporte(int arg, char *pids[], char nombreReporte[])
-{
-    for (int i = 2; i < arg; i++)
-    {
-        strcat(nombreReporte, "-");
-        strcat(nombreReporte, pids[i]);
-    }
-    strcat(nombreReporte, ".info");
-    reporte = fopen(nombreReporte, "w");
-    fprintf(reporte, "Informacion recolectada!!!\n");
 }
 
 
@@ -161,20 +142,6 @@ void registrarDatoEnProceso(struct proceso *myProceso, int caso, char dato[])
     }
 }
 
-void imprimirInfo(struct proceso myProceso)
-{
-    printf("\n");
-    printf("Pid:%s\n", myProceso.pid);
-    printf("Nombre del proceso:%s\n", myProceso.nombre);
-    printf("Tamaño total de la imagen de memoria:%s\n", myProceso.memoriaTotal);
-    printf("Tamaño de la memoria TEXT:%s\n", myProceso.memoriaText);
-    printf("Tamaño de la memoria DATA:%s\n", myProceso.memoriaData);
-    printf("Tamaños de la memoria STACK%s\n", myProceso.memoriaStack);
-    printf("Número de cambios de contexto:\n");
-    printf("\tvoluntarios:%s\n", myProceso.cambios.voluntarios);
-    printf("\tno voluntarios:%s\n", myProceso.cambios.noVoluntarios);
-}
-
 void agregarInfoEnReporte(FILE *fptr, struct proceso myProceso)
 {
     fprintf(fptr, "\n");
@@ -187,4 +154,18 @@ void agregarInfoEnReporte(FILE *fptr, struct proceso myProceso)
     fprintf(fptr, "Número de cambios de contexto:\n");
     fprintf(fptr, "\tvoluntarios:%s\n", myProceso.cambios.voluntarios);
     fprintf(fptr, "\tno voluntarios:%s\n", myProceso.cambios.noVoluntarios);
+}
+
+void imprimirInfo(struct proceso myProceso)
+{
+    printf("\n");
+    printf("Pid:%s\n", myProceso.pid);
+    printf("Nombre del proceso:%s\n", myProceso.nombre);
+    printf("Tamaño total de la imagen de memoria:%s\n", myProceso.memoriaTotal);
+    printf("Tamaño de la memoria TEXT:%s\n", myProceso.memoriaText);
+    printf("Tamaño de la memoria DATA:%s\n", myProceso.memoriaData);
+    printf("Tamaños de la memoria STACK%s\n", myProceso.memoriaStack);
+    printf("Número de cambios de contexto:\n");
+    printf("\tvoluntarios:%s\n", myProceso.cambios.voluntarios);
+    printf("\tno voluntarios:%s\n", myProceso.cambios.noVoluntarios);
 }
