@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <string.h>
+#include "gestion_de_archivos.h"
 
 FILE* abriArchivoStatus(char pid[])
 {
