@@ -1,40 +1,56 @@
 #include "proceso.h"
 
-char *datos[] = {"Name", "State", "Pid", "VmSize", "VmData", "VmStk", "VmExe", "voluntary_ctxt_switches", "nonvoluntary_ctxt_switches"};
+// Lista de claves a buscar en el archivo /proc/[pid]/status
+char *datos[] = {
+    "Name", "State", "Pid", "VmSize", "VmData", "VmStk", "VmExe",
+    "voluntary_ctxt_switches", "nonvoluntary_ctxt_switches"
+};
+
+// Número total de claves buscadas
 int length_datos = sizeof(datos) / sizeof(datos[0]);
 
+/*
+ * Función que recorre línea por línea el archivo abierto,
+ * y extrae los datos correspondientes a las claves en la lista 'datos'.
+ */
 proceso obtener_info(FILE *fptr)
 {
     char my_string[100];
     int i = 0;
     proceso my_proceso;
-    while (fgets(my_string, 100, fptr) && (i<length_datos))
+
+    while (fgets(my_string, 100, fptr) && (i < length_datos))
     {
         char *myPtr = strtok(my_string, ":\t");
         char key[50], value[500];
         int contador = 1;
+
         while (myPtr != NULL)
         {
             sprintf(value, "%s", myPtr);
             if (contador == 1)
-            {
                 sprintf(key, "%s", myPtr);
-            } else {
+            else
                 sprintf(value, "%s", myPtr);
-            }
+
             myPtr = strtok(NULL, "\n");
             contador++;
         }
+
+        // Si la clave coincide con la esperada, registrar el dato
         if (strcmp(key, datos[i]) == 0)
         {
-                registrar_dato_en_proceso(&my_proceso, i, value);
-                i++;
+            registrar_dato_en_proceso(&my_proceso, i, value);
+            i++;
         }
     }
+
     return my_proceso;
 }
 
-
+/*
+ * Guarda el dato en el campo correspondiente de la estructura proceso.
+ */
 void registrar_dato_en_proceso(proceso *my_proceso, int caso, char dato[])
 {
     switch (caso)
@@ -65,11 +81,15 @@ void registrar_dato_en_proceso(proceso *my_proceso, int caso, char dato[])
             break;
         case 8:
             strcpy(my_proceso->cambios.no_voluntarios, dato);
+            break;
         default:
             break;
     }
 }
 
+/*
+ * Escribe en un archivo los datos del proceso de manera formateada.
+ */
 void agregar_info_de_proceso_en_reporte(FILE *fptr, proceso my_proceso)
 {
     fprintf(fptr, "\n");
@@ -85,6 +105,9 @@ void agregar_info_de_proceso_en_reporte(FILE *fptr, proceso my_proceso)
     fprintf(fptr, "\tno voluntarios:%s\n", my_proceso.cambios.no_voluntarios);
 }
 
+/*
+ * Imprime por consola los datos del proceso.
+ */
 void imprimir_info_de_proceso(proceso my_proceso)
 {
     printf("\n");
